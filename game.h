@@ -1,18 +1,17 @@
 #ifndef _GAME_H
 #define _GAME_H
 
-#include "map_def.h"
+#include "game_def.h"
+#include "map_def.h" // For Path
+#include "player_def.h"
+#include "chess_def.h"
+#include "point_def.h"
 #include <stdbool.h>
 
-void setup(void);
-void create_empty_game(void);
-void init_game(void);
-void setup_game(Player user_player, Player start_player);
-void setup_game_from_user_input(void);
-void save_game(void);
-void restore_game(void);
-bool start_round(bool robot_playing);
-void game_loop(void);
-void finish_game(void);
+Game *create_empty_game(unsigned int map_h, unsigned int map_w, const ChessIdx chess_nums[], PlayerIdx player_num);
+void init_game(Game *game, const Point2D poses[], const Path paths[], unsigned int path_num, PlayerIdx start_player, PlayerIdx user_player);
+void setup_game_from_user_input(Game *game);
+void game_loop(Game *game);
+void destroy_game(Game *game);
 
 #endif
