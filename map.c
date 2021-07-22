@@ -8,26 +8,36 @@
 #define map_val(_v) (_v * 2 + 1)
 #define to_map_pos(_y, _x) ((_y = map_val(_y)), (_x = map_val(_x)))
 
-Map *create_empty_map(unsigned int h, unsigned int w)
+void create_empty_local_map(Map *map, unsigned int h, unsigned int w)
 {
-    Map *new_map = malloc(sizeof(Map));
-
     to_map_pos(h, w);
 
-    new_map->m = malloc(sizeof(MapElem *) * h);
+    map->m = malloc(sizeof(MapElem *) * h);
     for (unsigned int i = 0; i < h; i++)
     {
-        new_map->m[i] = malloc(sizeof(MapElem) * w);
-        for (unsigned int j = 0; i < w; j++)
+        map->m[i] = malloc(sizeof(MapElem) * w);
+        for (unsigned int j = 0; j < w; j++)
         {
             if (i % 2 == 1 && j % 2 == 1)
-                new_map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
+                map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
             else
-                new_map->m[i][j].road = NULL_ROAD;
+                map->m[i][j].road = NULL_ROAD;
         }
     }
+}
 
-    return new_map;
+void clear_map(Map *map)
+{
+    for (unsigned int i = 0; i < map->h; i++)
+    {
+        for (unsigned int j = 0; j < map->w; j++)
+        {
+            if (i % 2 == 1 && j % 2 == 1)
+                map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
+            else
+                map->m[i][j].road = NULL_ROAD;
+        }
+    }
 }
 
 Map *create_copy_of_map(Map *src_map)
@@ -47,14 +57,14 @@ Map *create_copy_of_map(Map *src_map)
     return new_map;
 }
 
-static void init_players_in_map(Map *map, Player *players, PlayerIdx player_num)
+static void init_players_in_map(Map *map, PlayerArray *player_array)
 {
-    for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
+    for (PlayerIdx p_i = 0; p_i < player_array->player_num; p_i++)
     {
-        for (ChessIdx c_i = 0; c_i < players[p_i].chess_num; c_i++)
+        for (ChessIdx c_i = 0; c_i < player_array->players[p_i].chess_num; c_i++)
         {
-            unsigned int y = map_val(players[p_i].chesses[c_i].pos.y);
-            unsigned int x = map_val(players[p_i].chesses[c_i].pos.x);
+            unsigned int y = map_val(player_array->players[p_i].chesses[c_i].pos.y);
+            unsigned int x = map_val(player_array->players[p_i].chesses[c_i].pos.x);
             map->m[y][x].chess_record.p_idx = p_i;
             map->m[y][x].chess_record.c_idx = c_i;
         }
@@ -79,9 +89,9 @@ static void init_roads_in_map(Map *map, Path paths[], unsigned int path_num)
     }
 }
 
-void init_map(Map *map, Player *players, PlayerIdx player_num, Path paths[], unsigned int path_num)
+void init_map(Map *map, PlayerArray *player_array, Path paths[], unsigned int path_num)
 {
-    init_players_in_map(map, players, player_num);
+    init_players_in_map(map, player_array);
     init_roads_in_map(map, paths, path_num);
 }
 
@@ -103,7 +113,7 @@ void print_map(const Map *map)
     }
 }
 
-void destroy_map(Map *map)
+void destroy_local_map(Map *map)
 {
     for (unsigned int i = 0; i < map->h; i++)
     {
@@ -112,5 +122,4 @@ void destroy_map(Map *map)
     }
     free(map->m);
     map->m = NULL;
-    free(map);
 }
