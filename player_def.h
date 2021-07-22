@@ -2,11 +2,13 @@
 #define _PLAYER_DEF_H
 
 #include "chess_def.h"
+#include <stdbool.h>
 
 typedef unsigned char PlayerIdx;
 typedef struct {
-    ChessIdx chess_num;
     Chess *chesses;
+    ChessIdx chess_num;
+    bool out;
 } Player;
 
 #define NULL_PLAYER_IDX ((PlayerIdx) 0xff)
