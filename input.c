@@ -1,11 +1,11 @@
 #include "input.h"
-#include "map_def.h"
+#include "player.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 
-Player get_player(const char *msg)
+PlayerIdx get_player_idx(const char *msg, PlayerIdx player_num)
 {
     char buf[2];
 
@@ -14,9 +14,9 @@ Player get_player(const char *msg)
         printf(msg); // 潜在的格式化字符串漏洞？
         read_n(buf, 2);
     }
-    while (buf[0] < PLAYER_TO_CHAR(FIRST_PLAYER) || buf[0] > PLAYER_TO_CHAR(LAST_PLAYER) );
+    while (buf[0] < player_idx_to_char(0) || buf[0] > player_idx_to_char(player_num - 1) );
 
-    return buf[0] - FIRST_PLAYER_CHAR + FIRST_PLAYER;
+    return buf[0] - FIRST_PLAYER_IDX_CHAR;
 }
 
 void read_n(char *buf, unsigned int len)
