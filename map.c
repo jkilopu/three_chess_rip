@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define map_val(_v) (_v * 2 + 1)
-#define to_map_pos(_y, _x) ((_y = map_val(_y)), (_x = map_val(_x)))
-
 void create_empty_local_map(Map *map, unsigned int h, unsigned int w)
 {
     to_map_pos(h, w);
@@ -71,7 +68,7 @@ static void init_players_in_map(Map *map, PlayerArray *player_array)
     }
 }
 
-static void init_roads_in_map(Map *map, Path paths[], unsigned int path_num)
+static void init_roads_in_map(Map *map, const Path paths[], unsigned int path_num)
 {
     for (unsigned int i = 0; i < path_num; i++)
     {
@@ -89,7 +86,7 @@ static void init_roads_in_map(Map *map, Path paths[], unsigned int path_num)
     }
 }
 
-void init_map(Map *map, PlayerArray *player_array, Path paths[], unsigned int path_num)
+void init_map(Map *map, PlayerArray *player_array, const Path paths[], unsigned int path_num)
 {
     init_players_in_map(map, player_array);
     init_roads_in_map(map, paths, path_num);
