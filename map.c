@@ -1,19 +1,31 @@
 #include "map.h"
-#include <stdlib.h>
+#include "road.h"
+#include "player.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#define map_val(_v) (_v * 2 + 1)
+#define to_map_pos(_y, _x) ((_y = map_val(_y)), (_x = map_val(_x)))
 
 Map *create_empty_map(unsigned int h, unsigned int w)
 {
     Map *new_map = malloc(sizeof(Map));
 
-    h = h * 2 - 1;
-    w = w * 2 - 1;
-    new_map->h = h, new_map->w = w;
+    to_map_pos(h, w);
 
     new_map->m = malloc(sizeof(MapElem *) * h);
     for (unsigned int i = 0; i < h; i++)
-        new_map->m[i] = calloc(w, sizeof(MapElem));
+    {
+        new_map->m[i] = malloc(sizeof(MapElem) * w);
+        for (unsigned int j = 0; i < w; j++)
+        {
+            if (i % 2 == 1 && j % 2 == 1)
+                new_map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
+            else
+                new_map->m[i][j].road = NULL_ROAD;
+        }
+    }
 
     return new_map;
 }
@@ -25,36 +37,52 @@ Map *create_copy_of_map(Map *src_map)
     new_map->w = src_map->w;
     new_map->h = src_map->h;
 
-    memcpy(new_map->m, src_map->m, new_map->w * new_map->h * sizeof(MapElem));
+    new_map->m = malloc(sizeof(MapElem *) * src_map->h);
+    for (unsigned int i = 0; i < src_map->h; i++)
+    {
+        new_map->m[i] = malloc(sizeof(MapElem) * src_map->w);
+        memcpy(new_map->m[i], src_map->m[i], src_map->w * sizeof(MapElem));
+    }
 
     return new_map;
 }
 
-void init_map(Map *map, Point2D chess_records[][CHESS_PER_PLAYER], Path paths[], unsigned int paths_num)
+static void init_players_in_map(Map *map, Player *players, PlayerIdx player_num)
 {
-    for (Player i = FIRST_PLAYER; i <= LAST_PLAYER; i++)
-        for (ChessIdx j = 0; j < CHESS_PER_PLAYER; j++)
-        {
-            unsigned int y = chess_records[PLAYER_IDX(i)][j].y * 2;
-            unsigned int x = chess_records[PLAYER_IDX(i)][j].x * 2;
-            map->m[y][x].chess.player = i;
-            map->m[y][x].chess.idx = j;
-        }
-
-    for (unsigned int i = 0; i < paths_num; i++)
+    for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
     {
-        unsigned int y = paths[i].first.y + paths[i].second.y;
-        unsigned int x = paths[i].first.x + paths[i].second.x;
-        SET_PATH(map->m[y][x].road);
+        for (ChessIdx c_i = 0; c_i < players[p_i].chess_num; c_i++)
+        {
+            unsigned int y = map_val(players[p_i].chesses[c_i].pos.y);
+            unsigned int x = map_val(players[p_i].chesses[c_i].pos.x);
+            map->m[y][x].chess_record.p_idx = p_i;
+            map->m[y][x].chess_record.c_idx = c_i;
+        }
+    }
+}
+
+static void init_roads_in_map(Map *map, Path paths[], unsigned int path_num)
+{
+    for (unsigned int i = 0; i < path_num; i++)
+    {
+        unsigned int y = map_val(paths[i].first.y + paths[i].second.y);
+        unsigned int x = map_val(paths[i].first.x + paths[i].second.x);
+        set_path(map->m[y][x].road);
 
         if (paths[i].second.y != paths[i].first.y && paths[i].second.x != paths[i].first.x)
         {
             if (((int) paths[i].second.y - (int) paths[i].first.y) * ((int) paths[i].second.x * (int )paths[i].first.x) > 0) // 有溢出的可能
-                SET_GO_UP_LEFT_OR_DOWN_RIGHT(map->m[y][x].road);
+                set_go_up_left_or_down_right(map->m[y][x].road);
             else
-                SET_GO_UP_RIGHT_OR_DOWN_LEFT(map->m[y][x].road);
+                set_go_up_right_or_down_left(map->m[y][x].road);
         }
     }
+}
+
+void init_map(Map *map, Player *players, PlayerIdx player_num, Path paths[], unsigned int path_num)
+{
+    init_players_in_map(map, players, player_num);
+    init_roads_in_map(map, paths, path_num);
 }
 
 void print_map(const Map *map)
@@ -63,12 +91,12 @@ void print_map(const Map *map)
     {
         for (unsigned int j = 0; j < map->w; j++)
         {
-            if (i % 2 == 1 || j % 2 == 1)
+            if (i % 2 == 0 || j % 2 == 0)
                 printf("%hhu", map->m[i][j].road);
-            else if(map->m[i][j].chess.player == NULL_PLAYER)
-                putchar('x');
+            else if(map->m[i][j].chess_record.p_idx == NULL_PLAYER_IDX)
+                putchar(player_idx_to_char(map->m[i][j].chess_record.p_idx));
             else
-                putchar(PLAYER_TO_CHAR(map->m[i][j].chess.player));
+                putchar('x');
             putchar(' ');
         }
         putchar('\n');
