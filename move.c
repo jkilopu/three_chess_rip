@@ -16,7 +16,7 @@ static char *move_dir_str[] = {
     "down-right",
 };
 
-static MoveInfo move_try(Round *round, Point2D pos, Direction dir, bool move_on_success)
+MoveInfo move_try(Round *round, Point2D pos, DirectionIdx dir, bool move_on_success)
 {
     MoveInfo move_info = MOVE_SUCCESS;
     unsigned int y = map_val(pos.y);
@@ -156,18 +156,18 @@ static MoveInfo move_try(Round *round, Point2D pos, Direction dir, bool move_on_
     return move_info;
 }
 
-bool move(Round *round, Point2D pos, Direction dir)
+bool move(Round *round, Point2D pos, DirectionIdx dir)
 {
     MoveInfo move_info = move_try(round, pos, dir, true);
     handle_move_info(move_info);
     return move_info == MOVE_SUCCESS;
 }
 
-static unsigned int get_movable_direction(Round *round, Point2D pos, Direction dir_arr[])
+static DirectionIdx get_movable_direction(Round *round, Point2D pos, DirectionIdx dir_arr[])
 {
-    unsigned int cnt = 0;
+    DirectionIdx cnt = 0;
 
-    for (Direction d = UP; d <= DOWN_RIGHT; d++)
+    for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
         if (move_try(round, pos, d, false) == MOVE_SUCCESS)
             dir_arr[cnt++] = d;
 
@@ -177,15 +177,16 @@ static unsigned int get_movable_direction(Round *round, Point2D pos, Direction d
     return cnt;
 }
 
-static unsigned int get_player_movable_chess(Round *round, PlayerIdx p_i, Point2D movable_poses[], Direction movable_dirs[][DIRECTION_NUM], unsigned int dir_cnts[])
+ChessIdx get_available_move_choice(Round *round, Point2D movable_poses[], DirectionIdx movable_dirs[][DIRECTION_NUM], DirectionIdx dir_cnts[])
 {
-    unsigned int movable_chess_cnt = 0;
+    ChessIdx movable_chess_cnt = 0;
 
-    ChessIdx chess_num = round->player_array.players[p_i].chess_num;
+    PlayerIdx p_idx = round->round_player_idx;
+    ChessIdx chess_num = round->player_array.players[p_idx].chess_num;
     for (ChessIdx c_i = 0; c_i < chess_num; c_i++)
     {
-        Point2D pos = round->player_array.players[p_i].chesses[c_i].pos;
-        unsigned int movable_dir_cnt = get_movable_direction(round, pos, movable_dirs[movable_chess_cnt]);
+        Point2D pos = round->player_array.players[p_idx].chesses[c_i].pos;
+        DirectionIdx movable_dir_cnt = get_movable_direction(round, pos, movable_dirs[movable_chess_cnt]);
         if (movable_dir_cnt)
         {
             movable_poses[movable_chess_cnt] = pos;
@@ -194,16 +195,22 @@ static unsigned int get_player_movable_chess(Round *round, PlayerIdx p_i, Point2
         }
     }
 
-    return movable_chess_cnt;
-}
-
-unsigned int get_available_move_choice(Round *round, Point2D movable_poses[], Direction movable_dirs[][DIRECTION_NUM], unsigned int dir_cnts[])
-{
-    unsigned int movable_chess_cnt = 0;
-
-    movable_chess_cnt += get_player_movable_chess(round, round->round_player_idx, movable_poses, movable_dirs, dir_cnts);
     if (round->out_player_idx != NULL_PLAYER_IDX && !round->out_chess_moved)
-        movable_chess_cnt += get_player_movable_chess(round, round->out_player_idx, movable_poses, movable_dirs, dir_cnts);
+    {
+        p_idx = round->out_player_idx;
+        ChessIdx chess_num = round->player_array.players[p_idx].chess_num;
+        for (ChessIdx c_i = 0; c_i < chess_num; c_i++)
+        {
+            Point2D pos = round->player_array.players[p_idx].chesses[c_i].pos;
+            DirectionIdx movable_dir_cnt = get_movable_direction(round, pos, movable_dirs[movable_chess_cnt]);
+            if (movable_dir_cnt)
+            {
+                movable_poses[movable_chess_cnt] = pos;
+                dir_cnts[movable_chess_cnt] = movable_dir_cnt;
+                movable_chess_cnt++;
+            }
+        }
+    }
 
     return movable_chess_cnt;
 }
@@ -226,10 +233,10 @@ PlayerIdx player_out(Round *round)
                 {
                     Point2D pos = {real_val(y), real_val(x)};
                     round->round_player_idx = p_i;
-                    for (Direction d = UP; d <= DOWN_RIGHT; d++)
+                    for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
                         if (move_try(round, pos, d, false) == MOVE_SUCCESS)
                         {
-                            lose[p_i] = true;
+                            lose[p_i] = false;
                             break;
                         }
                     break;
@@ -297,7 +304,7 @@ void handle_move_info(MoveInfo move_info)
     }
 }
 
-void print_move_choice(Point2D pos, Direction dir)
+void print_move_choice(Point2D pos, DirectionIdx dir)
 {
     printf("(%u, %u) ", pos.y, pos.x);
     puts(move_dir_str[dir - UP]);
