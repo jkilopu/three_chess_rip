@@ -36,7 +36,7 @@ void clear_round(Round *round)
     round->round_num = 0;
 }
 
-RoundInfo start_round(Round *round, Point2D pos, Direction dir)
+RoundInfo start_round(Round *round, Point2D pos, DirectionIdx dir)
 {
     RoundInfo round_info = { .status=GAME_RUN };
 
@@ -53,16 +53,18 @@ RoundInfo start_round(Round *round, Point2D pos, Direction dir)
         round_info.game_end.last_player_idx = last_player_idx;
     }
 
+    round->round_num++;
+
     return round_info;
 }
 
 void print_round(const Round *round)
 {
-    printf("Round %u\n", round->round_num);
+    printf("\nRound %u\n", round->round_num);
     print_map(&round->map);
     print_player_array(&round->player_array);
     if (round->out_player_idx != NULL_PLAYER_IDX)
-        printf("Double chess belongs to %c, moved: %hhu", player_idx_to_char(round->out_player_idx), round->out_chess_moved);
+        printf("Double chess belongs to %c, moved: %hhu\n", player_idx_to_char(round->out_player_idx), round->out_chess_moved);
     printf("Player %c's turn: ", player_idx_to_char(round->round_player_idx));
 }
 
