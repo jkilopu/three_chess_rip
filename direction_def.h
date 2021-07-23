@@ -2,6 +2,8 @@
 #define _DIRECTION_DEF_H
 
 #define DIRECTION_NUM (DOWN_RIGHT - UP + 1)
+
+typedef unsigned char DirectionIdx;
 typedef enum {
     INVALID_DIRECTION,
     UP,
