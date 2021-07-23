@@ -21,6 +21,8 @@ void create_empty_local_map(Map *map, unsigned int h, unsigned int w)
                 map->m[i][j].road = NULL_ROAD;
         }
     }
+
+    map->h = h, map->w = w;
 }
 
 void clear_map(Map *map)
@@ -72,8 +74,8 @@ static void init_roads_in_map(Map *map, const Path paths[], unsigned int path_nu
 {
     for (unsigned int i = 0; i < path_num; i++)
     {
-        unsigned int y = map_val(paths[i].first.y + paths[i].second.y);
-        unsigned int x = map_val(paths[i].first.x + paths[i].second.x);
+        unsigned int y = paths[i].first.y + paths[i].second.y + 1;
+        unsigned int x = paths[i].first.x + paths[i].second.x + 1;
         set_path(map->m[y][x].road);
 
         if (paths[i].second.y != paths[i].first.y && paths[i].second.x != paths[i].first.x)
@@ -100,7 +102,7 @@ void print_map(const Map *map)
         {
             if (i % 2 == 0 || j % 2 == 0)
                 printf("%hhu", map->m[i][j].road);
-            else if(map->m[i][j].chess_record.p_idx == NULL_PLAYER_IDX)
+            else if(map->m[i][j].chess_record.p_idx != NULL_PLAYER_IDX)
                 putchar(player_idx_to_char(map->m[i][j].chess_record.p_idx));
             else
                 putchar('x');
