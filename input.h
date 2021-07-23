@@ -7,6 +7,6 @@
 
 PlayerIdx get_player_idx(const char *msg, PlayerIdx player_num);
 void read_n(char *buf, unsigned int len);
-Direction parse_move_input(const char buf[], Point2D *p_pos);
+DirectionIdx parse_move_input(const char buf[], Point2D *p_pos);
 
 #endif

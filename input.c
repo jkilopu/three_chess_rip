@@ -45,7 +45,7 @@ void read_n(char *buf, unsigned int len)
     }
 }
 
-Direction parse_move_input(const char buf[], Point2D *p_pos)
+DirectionIdx parse_move_input(const char buf[], Point2D *p_pos)
 {
     char *dir_p = strstr(buf, ") ");
     if (dir_p == NULL)
