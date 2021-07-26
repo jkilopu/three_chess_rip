@@ -3,15 +3,17 @@
 #include "settings.h"
 #include "move.h"
 #include "robot.h"
+#include "game_tree.h"
 #include "input.h"
 #include <stdio.h>
 #include <stdlib.h>
 
-Game *create_empty_game(unsigned int map_h, unsigned int map_w, const ChessIdx chess_nums[], PlayerIdx player_num)
+Game *create_empty_game(unsigned int map_visable_h, unsigned int map_visable_w, const ChessIdx chess_nums[], PlayerIdx player_num)
 {
     Game *new_game = malloc(sizeof(Game));
-    create_empty_local_round(&new_game->round, map_h, map_w, chess_nums, player_num);
+    create_empty_local_round(&new_game->round, map_visable_h, map_visable_w, chess_nums, player_num);
     clear_settings(&new_game->settings);
+    new_game->game_tree = NULL;
     return new_game;
 }
 
@@ -19,6 +21,7 @@ void init_game(Game *game, const Point2D poses[], const Path paths[], unsigned i
 {
     init_round(&game->round, poses, paths, path_num, start_player_idx);
     init_settings(&game->settings, user_player_idx);
+    init_game_tree_in_game(game);
 }
 
 void setup_game_from_user_input(Game *game)
@@ -54,11 +57,11 @@ void setup_game_from_user_input(Game *game)
     init_game(game, poses, paths, sizeof(paths) / sizeof(Path), start_player_idx, user_player_idx);
 }
 
-static DirectionIdx ask_for_choice(Game *game, PlayerIdx p_idx, Point2D *p_pos)
+static DirectionIdx ask_for_choice(Game *game, Point2D *p_pos)
 {
     DirectionIdx dir; // 变量未初始化导致robot做出错误的选择？
 
-    if (p_idx == game->settings.user_player_idx)
+    if (game->round.round_player_idx == game->settings.user_player_idx)
     {
         MoveInfo move_info;
         do
@@ -73,7 +76,7 @@ static DirectionIdx ask_for_choice(Game *game, PlayerIdx p_idx, Point2D *p_pos)
     }
     else
     {
-        RobotInfo robot_info = robot_make_random_choice(game, p_pos, &dir);
+        RobotInfo robot_info = robot_make_best_choice(game, p_pos, &dir);
         handle_robot_info(robot_info);
         print_move_choice(*p_pos, dir);
     }
@@ -84,22 +87,16 @@ static DirectionIdx ask_for_choice(Game *game, PlayerIdx p_idx, Point2D *p_pos)
 void game_loop(Game *game)
 {
     RoundInfo round_info;
-    PlayerIdx player_num = game->round.player_array.player_num;
-    PlayerIdx player_idx = game->round.round_player_idx;
-
     do
     {
-        if (!game->round.player_array.players[player_idx].out)
-        {
-            print_round(&game->round);
+        print_round(&game->round);
 
-            Point2D pos;
-            DirectionIdx dir = ask_for_choice(game, player_idx, &pos);
+        Point2D pos;
+        DirectionIdx dir = ask_for_choice(game, &pos);
 
-            round_info = start_round(&game->round, pos, dir);
-        }
-        player_idx = (player_idx + 1) % player_num;
-        game->round.round_player_idx = player_idx;
+        step_on_game_tree(game->game_tree, pos, dir, game->round.map.visable_h, game->round.map.visable_w);
+
+        round_info = start_round(&game->round, pos, dir);
     }
     while (round_info.status != GAME_END);
 }

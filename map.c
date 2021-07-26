@@ -7,13 +7,16 @@
 
 void create_empty_local_map(Map *map, unsigned int h, unsigned int w)
 {
-    to_map_pos(h, w);
+    map->visable_h = h;
+    map->visable_w = w;
+    map->inner_h = inner_val(h);
+    map->inner_w = inner_val(w);
 
-    map->m = malloc(sizeof(MapElem *) * h);
-    for (unsigned int i = 0; i < h; i++)
+    map->m = malloc(sizeof(MapElem *) * map->inner_h);
+    for (unsigned int i = 0; i < map->inner_h; i++)
     {
-        map->m[i] = malloc(sizeof(MapElem) * w);
-        for (unsigned int j = 0; j < w; j++)
+        map->m[i] = malloc(sizeof(MapElem) * map->inner_w);
+        for (unsigned int j = 0; j < map->inner_w; j++)
         {
             if (i % 2 == 1 && j % 2 == 1)
                 map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
@@ -21,15 +24,13 @@ void create_empty_local_map(Map *map, unsigned int h, unsigned int w)
                 map->m[i][j].road = NULL_ROAD;
         }
     }
-
-    map->h = h, map->w = w;
 }
 
 void clear_map(Map *map)
 {
-    for (unsigned int i = 0; i < map->h; i++)
+    for (unsigned int i = 0; i < map->inner_h; i++)
     {
-        for (unsigned int j = 0; j < map->w; j++)
+        for (unsigned int j = 0; j < map->inner_w; j++)
         {
             if (i % 2 == 1 && j % 2 == 1)
                 map->m[i][j].chess_record.p_idx = NULL_PLAYER_IDX;
@@ -39,21 +40,33 @@ void clear_map(Map *map)
     }
 }
 
-Map *create_copy_of_map(Map *src_map)
+void create_copy_of_local_map(Map *new_map, const Map *src_map)
 {
-    Map *new_map = malloc(sizeof(Map));
-
-    new_map->w = src_map->w;
-    new_map->h = src_map->h;
-
-    new_map->m = malloc(sizeof(MapElem *) * src_map->h);
-    for (unsigned int i = 0; i < src_map->h; i++)
+    new_map->m = malloc(sizeof(MapElem *) * src_map->inner_h);
+    for (unsigned int i = 0; i < src_map->inner_h; i++)
     {
-        new_map->m[i] = malloc(sizeof(MapElem) * src_map->w);
-        memcpy(new_map->m[i], src_map->m[i], src_map->w * sizeof(MapElem));
+        new_map->m[i] = malloc(sizeof(MapElem) * src_map->inner_w);
+        memcpy(new_map->m[i], src_map->m[i], src_map->inner_w * sizeof(MapElem));
     }
+    new_map->inner_h = src_map->inner_h;
+    new_map->inner_w = src_map->inner_w;
+    new_map->visable_h = src_map->visable_h;
+    new_map->visable_w = src_map->visable_w;
+}
 
-    return new_map;
+void copy_map(Map *dst_map, const Map *src_map)
+{
+    copy_map_element(dst_map, src_map);
+    dst_map->inner_h = src_map->inner_h;
+    dst_map->inner_w = src_map->inner_w;
+    dst_map->visable_h = src_map->visable_h;
+    dst_map->visable_w = src_map->visable_w;
+}
+
+void copy_map_element(Map *dst_map, const Map *src_map)
+{
+    for (unsigned int i = 0; i < src_map->inner_h; i++)
+        memcpy(dst_map->m[i], src_map->m[i], src_map->inner_w * sizeof(MapElem));
 }
 
 static void init_players_in_map(Map *map, PlayerArray *player_array)
@@ -62,8 +75,8 @@ static void init_players_in_map(Map *map, PlayerArray *player_array)
     {
         for (ChessIdx c_i = 0; c_i < player_array->players[p_i].chess_num; c_i++)
         {
-            unsigned int y = map_val(player_array->players[p_i].chesses[c_i].pos.y);
-            unsigned int x = map_val(player_array->players[p_i].chesses[c_i].pos.x);
+            unsigned int y = inner_val(player_array->players[p_i].chesses[c_i].pos.y);
+            unsigned int x = inner_val(player_array->players[p_i].chesses[c_i].pos.x);
             map->m[y][x].chess_record.p_idx = p_i;
             map->m[y][x].chess_record.c_idx = c_i;
         }
@@ -96,9 +109,9 @@ void init_map(Map *map, PlayerArray *player_array, const Path paths[], unsigned 
 
 void print_map(const Map *map)
 {
-    for (unsigned int i = 0; i < map->h; i++)
+    for (unsigned int i = 0; i < map->inner_h; i++)
     {
-        for (unsigned int j = 0; j < map->w; j++)
+        for (unsigned int j = 0; j < map->inner_w; j++)
         {
             if (i % 2 == 0 || j % 2 == 0)
                 printf("%hhu", map->m[i][j].road);
@@ -114,11 +127,21 @@ void print_map(const Map *map)
 
 void destroy_local_map(Map *map)
 {
-    for (unsigned int i = 0; i < map->h; i++)
+    for (unsigned int i = 0; i < map->inner_h; i++)
     {
         free(map->m[i]);
         map->m[i] = NULL;
     }
     free(map->m);
     map->m = NULL;
+}
+
+void destroy_map(Map *map)
+{
+    destroy_local_map(map);
+    free(map);
+    map->visable_h = 0;
+    map->visable_w = 0;
+    map->inner_h = 0;
+    map->inner_w = 0;
 }

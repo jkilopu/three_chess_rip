@@ -12,7 +12,8 @@ typedef union {
 
 typedef struct {
     MapElem **m;
-    unsigned int h, w;
+    unsigned int inner_h, inner_w;
+    unsigned int visable_h, visable_w;
 } Map;
 
 typedef PairPoint2D Path;

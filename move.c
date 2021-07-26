@@ -19,10 +19,10 @@ static char *move_dir_str[] = {
 MoveInfo move_try(Round *round, Point2D pos, DirectionIdx dir, bool move_on_success)
 {
     MoveInfo move_info = MOVE_SUCCESS;
-    unsigned int y = map_val(pos.y);
-    unsigned int x = map_val(pos.x);
+    unsigned int y = inner_val(pos.y);
+    unsigned int x = inner_val(pos.x);
 
-    if (y >= round->map.h || x >= round->map.w) // 可以设计溢出的漏洞
+    if (y >= round->map.inner_h || x >= round->map.inner_w) // 可以设计溢出的漏洞
         return POS_OUT_OF_BOUND;
 
     // 这里可以出逻辑漏洞
@@ -225,13 +225,13 @@ PlayerIdx player_out(Round *round)
         lose[p_i] = true;
 
     PlayerIdx tmp_player_idx = round->round_player_idx;
-    for (unsigned int y = 1; y < round->map.h; y += 2)
-        for (unsigned int x = 1; x < round->map.w; x += 2)
+    for (unsigned int y = 1; y < round->map.inner_h; y += 2)
+        for (unsigned int x = 1; x < round->map.inner_w; x += 2)
             for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
             {
                 if (!round->player_array.players[p_i].out && round->map.m[y][x].chess_record.p_idx == p_i)
                 {
-                    Point2D pos = {real_val(y), real_val(x)};
+                    Point2D pos = {visable_val(y), visable_val(x)};
                     round->round_player_idx = p_i;
                     for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
                         if (move_try(round, pos, d, false) == MOVE_SUCCESS)
@@ -261,7 +261,7 @@ PlayerIdx player_out(Round *round)
             out_cnt++;
     }
 
-    return out_cnt == player_num - 1 ? last_player_idx : NULL_PLAYER_IDX;
+    return out_cnt >= player_num - 1 ? last_player_idx : HAS_PLAYER_IDX;
 }
 
 void handle_move_info(MoveInfo move_info)

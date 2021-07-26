@@ -7,11 +7,12 @@
 typedef unsigned char PlayerIdx;
 typedef struct {
     Chess *chesses;
-    ChessIdx chess_num;
     bool out;
+    ChessIdx chess_num;
 } Player;
 
 #define NULL_PLAYER_IDX ((PlayerIdx) 0xff)
+#define HAS_PLAYER_IDX ((PlayerIdx) 0xff - 1)
 #define FIRST_PLAYER_IDX_CHAR ('a')
 
 #endif

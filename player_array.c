@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <string.h>
 
 void create_empty_local_player_array(PlayerArray *player_array, const ChessIdx chess_nums[], PlayerIdx player_num)
 {
@@ -43,6 +44,40 @@ void init_player_array(PlayerArray *player_array, const Point2D poses[])
             player_array->players[p_i].chesses[c_i].pos = poses[pos_idx];
             pos_idx++;
         }
+    }
+}
+
+void create_copy_of_local_player_array(PlayerArray *new_player_array, const PlayerArray *src_player_array)
+{
+    new_player_array->players = malloc(sizeof(Player) * src_player_array->player_num);
+
+    for (PlayerIdx p_i = 0; p_i < src_player_array->player_num; p_i++)
+    {
+        new_player_array->players[p_i].chesses = malloc(sizeof(Chess) * src_player_array->players[p_i].chess_num);
+        memcpy(new_player_array->players[p_i].chesses, src_player_array->players[p_i].chesses, sizeof(Chess) * src_player_array->players[p_i].chess_num);
+        new_player_array->players[p_i].chess_num = src_player_array->players[p_i].chess_num;
+        new_player_array->players[p_i].out = src_player_array->players[p_i].out;
+    }
+    new_player_array->player_num = src_player_array->player_num;
+}
+
+void copy_player_array(PlayerArray *dst_player_array, const PlayerArray *src_player_array)
+{
+    for (PlayerIdx p_i = 0; p_i < src_player_array->player_num; p_i++)
+    {
+        memcpy(dst_player_array->players[p_i].chesses, src_player_array->players[p_i].chesses, sizeof(Chess) * src_player_array->players[p_i].chess_num);
+        dst_player_array->players[p_i].chess_num = src_player_array->players[p_i].chess_num;
+        dst_player_array->players[p_i].out = src_player_array->players[p_i].out;
+    }
+    dst_player_array->player_num = src_player_array->player_num;
+}
+
+void copy_player_array_element(PlayerArray *dst_player_array, const PlayerArray *src_player_array)
+{
+    for (PlayerIdx p_i = 0; p_i < src_player_array->player_num; p_i++)
+    {
+        memcpy(dst_player_array->players[p_i].chesses, src_player_array->players[p_i].chesses, sizeof(Chess) * src_player_array->players[p_i].chess_num);
+        dst_player_array->players[p_i].out = src_player_array->players[p_i].out;
     }
 }
 

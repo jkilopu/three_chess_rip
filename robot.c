@@ -1,5 +1,7 @@
 #include "robot.h"
 #include "move.h"
+#include "map.h"
+#include "movement_idx.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -21,7 +23,7 @@ static void choose_pos_dir(DirectionIdx dir_idx, Point2D *p_pos, DirectionIdx *p
     *p_dir = movable_dirs[chess_choice][dir_choice];
 }
 
-static RobotInfo get_choices(Round *round, Point2D movable_poses[], DirectionIdx movable_dirs[][DIRECTION_NUM], DirectionIdx dir_cnts[], ChessIdx *p_movable_chess_num)
+RobotInfo robot_get_move_choices(Round *round, Point2D movable_poses[], DirectionIdx movable_dirs[][DIRECTION_NUM], DirectionIdx dir_cnts[], ChessIdx *p_movable_chess_num)
 {
     *p_movable_chess_num = get_available_move_choice(round, movable_poses, movable_dirs, dir_cnts);
 
@@ -41,7 +43,7 @@ RobotInfo robot_make_random_choice(Game *game, Point2D *p_pos, DirectionIdx *p_d
     DirectionIdx movable_dirs[3 * 2][DIRECTION_NUM];
     DirectionIdx dir_cnts[3 * 2];
     ChessIdx movable_chess_num;
-    RobotInfo robot_info = get_choices(&game->round, movable_poses, movable_dirs, dir_cnts, &movable_chess_num);
+    RobotInfo robot_info = robot_get_move_choices(&game->round, movable_poses, movable_dirs, dir_cnts, &movable_chess_num);
 
     if (robot_info == ROBOT_SUCCESS)
     {
@@ -60,6 +62,43 @@ RobotInfo robot_make_random_choice(Game *game, Point2D *p_pos, DirectionIdx *p_d
 
 RobotInfo robot_make_best_choice(Game *game, Point2D *p_pos, DirectionIdx *p_dir)
 {
+    RobotInfo robot_info = ROBOT_SUCCESS;
+    Node *cur_node = game->game_tree->cur_node;
+    
+    switch (cur_node->node_status)
+    {
+        case COMPLETE_WIN:
+        {
+            KidIdx k_i = 0;
+            while (k_i < cur_node->kid_num)
+            {
+                if (cur_node->kids[k_i]->node_status == COMPLETE_WIN)
+                {
+                    *p_dir = idx_to_movement(cur_node->mi[k_i], p_pos, game->round.map.visable_h, game->round.map.visable_w);
+                    break;
+                }
+                k_i++;
+            }
+            if (k_i == cur_node->kid_num)
+                robot_info = NO_COMPLETE_WIN_NODE;
+            break;
+        }
+        case NOT_COMPLETE_WIN:
+        case UNDETERMINED:
+        {
+            KidIdx max_win_rate_kid_idx = 0;
+            for (KidIdx k_i = 1; k_i < cur_node->kid_num; k_i++)
+            {
+                if (cur_node->kids[k_i]->win_num * cur_node->kids[max_win_rate_kid_idx]->total_num
+                        < cur_node->kids[k_i]->total_num * cur_node->kids[max_win_rate_kid_idx]->win_num)
+                    max_win_rate_kid_idx = k_i;
+            }
+            *p_dir = idx_to_movement(cur_node->mi[max_win_rate_kid_idx], p_pos, game->round.map.visable_h, game->round.map.visable_w);
+            break;
+        }
+    }
+
+    return robot_info;
 }
 
 void handle_robot_info(RobotInfo robot_info)
@@ -73,6 +112,9 @@ void handle_robot_info(RobotInfo robot_info)
             break;
         case CHOICE_TOO_MUCH:
             puts("RobotInfo: Having so much choice is impossible.");
+            exit(1);
+        case NO_COMPLETE_WIN_NODE:
+            puts("RobotInfo: Can't find complete win kid.");
             exit(1);
         default:
             puts("RobotInfo: Unknown robot error. Exit.");
