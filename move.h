@@ -9,7 +9,7 @@
 MoveInfo move_try(Round *round, Point2D pos, DirectionIdx dir, bool move_on_success);
 bool move(Round *round, Point2D pos, DirectionIdx dir);
 ChessIdx get_available_move_choice(Round *round, Point2D movable_poses[], DirectionIdx movable_dirs[][DIRECTION_NUM], DirectionIdx dir_cnts[]);
-PlayerIdx player_out(Round *round);
+bool player_out(Round *round);
 void handle_move_info(MoveInfo move_info);
 void print_move_choice(Point2D pos, DirectionIdx dir);
 

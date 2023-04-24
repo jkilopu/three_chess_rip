@@ -216,52 +216,45 @@ ChessIdx get_available_move_choice(Round *round, Point2D movable_poses[], Direct
 }
 
 // 或许之后可以把它拆分为几个static函数
-PlayerIdx player_out(Round *round)
+bool player_out(Round *round)
 {
-    PlayerIdx player_num = round->player_array.player_num;
-    bool lose[player_num];
+    bool lose = true;
 
-    for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
-        lose[p_i] = true;
-
-    PlayerIdx tmp_player_idx = round->round_player_idx;
-    for (unsigned int y = 1; y < round->map.inner_h; y += 2)
-        for (unsigned int x = 1; x < round->map.inner_w; x += 2)
-            for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
-            {
-                if (!round->player_array.players[p_i].out && round->map.m[y][x].chess_record.p_idx == p_i)
-                {
-                    Point2D pos = {visable_val(y), visable_val(x)};
-                    round->round_player_idx = p_i;
-                    for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
-                        if (move_try(round, pos, d, false) == MOVE_SUCCESS)
-                        {
-                            lose[p_i] = false;
-                            break;
-                        }
-                    break;
-                }
-            }
-    round->round_player_idx = tmp_player_idx;
-
-    PlayerIdx out_cnt = 0;
-    PlayerIdx last_player_idx = NULL_PLAYER_IDX;
-    for (PlayerIdx p_i = 0; p_i < player_num; p_i++)
+    for (ChessIdx c_i = 0; c_i < round->player_array.players[round->round_player_idx].chess_num; c_i++)
     {
-        if (lose[p_i])
+        Point2D pos = round->player_array.players[round->round_player_idx].chesses[c_i].pos;
+        for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
         {
-            round->player_array.players[p_i].out = true;
-            if (round->out_player_idx == NULL_PLAYER_IDX)
-                round->out_player_idx = p_i;
+            if (move_try(round, pos, d, false) == MOVE_SUCCESS)
+            {
+                lose = false;
+                break;
+            }
         }
-
-        if (!round->player_array.players[p_i].out)
-            last_player_idx = p_i;
-        else
-            out_cnt++;
     }
 
-    return out_cnt >= player_num - 1 ? last_player_idx : HAS_PLAYER_IDX;
+    PlayerIdx tmp_player_idx = round->round_player_idx;
+    if (lose && round->out_player_idx != NULL_PLAYER_IDX && !round->out_chess_moved)
+    {
+        PlayerIdx p_i = round->out_player_idx;
+        round->round_player_idx = p_i;
+        for (ChessIdx c_i = 0; c_i < round->player_array.players[p_i].chess_num; c_i++)
+        {
+            Point2D pos = round->player_array.players[p_i].chesses[c_i].pos;
+            for (DirectionIdx d = UP; d <= DOWN_RIGHT; d++)
+                if (move_try(round, pos, d, false) == MOVE_SUCCESS)
+                {
+                    lose = false;
+                    break;
+                }
+        }
+    }
+    round->round_player_idx = tmp_player_idx;
+
+    if (lose)
+        round->player_array.players[round->round_player_idx].out = true;
+
+    return lose;
 }
 
 void handle_move_info(MoveInfo move_info)

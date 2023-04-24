@@ -46,6 +46,7 @@ Round *create_copy_of_round(Round *src_round)
     new_round->out_player_idx = src_round->out_player_idx;
     new_round->out_chess_moved = src_round->out_chess_moved;
     new_round->round_num = src_round->round_num;
+    return new_round;
 }
 
 void copy_round_dynamic_part(Round *dst_round, Round *src_round)
@@ -68,20 +69,24 @@ RoundInfo start_round(Round *round, Point2D pos, DirectionIdx dir)
         return round_info;
     }
 
-    PlayerIdx last_player_idx = player_out(round);
-    if (last_player_idx != HAS_PLAYER_IDX)
+    PlayerIdx out_cnt = 0;
+    PlayerIdx last_move_player_idx = round->round_player_idx;
+    do
+    {
+        round->round_player_idx = (round->round_player_idx + 1) % round->player_array.player_num;
+        if (round->player_array.players[round->round_player_idx].out || player_out(round))
+            out_cnt++;
+        else
+            break;
+    }
+    while (out_cnt < round->player_array.player_num - 1);
+
+    if (out_cnt >= round->player_array.player_num - 1)
     {
         round_info.status = GAME_END;
-        round_info.game_end.last_player_idx = last_player_idx;
-        return round_info;
+        round_info.game_end.last_player_idx = last_move_player_idx;
     }
 
-    PlayerIdx player_num = round->player_array.player_num;
-    PlayerIdx player_idx = round->round_player_idx;
-    do
-        player_idx = (player_idx + 1) % player_num;
-    while (round->player_array.players[player_idx].out);
-    round->round_player_idx = player_idx;
     round->round_num++;
 
     return round_info;

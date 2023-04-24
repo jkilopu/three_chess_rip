@@ -5,11 +5,11 @@
 #include <stdbool.h>
 
 typedef unsigned char KidIdx;
-typedef unsigned int ResultIdx;
+typedef unsigned long long ResultIdx;
 typedef unsigned char NodeStatus;
 
 enum {
-    COMPLETE_WIN,
+    COMPLETE_WIN = 1,
     NOT_COMPLETE_WIN,
     UNDETERMINED,
 };

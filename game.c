@@ -21,36 +21,55 @@ void init_game(Game *game, const Point2D poses[], const Path paths[], unsigned i
 {
     init_round(&game->round, poses, paths, path_num, start_player_idx);
     init_settings(&game->settings, user_player_idx);
+    game->round.out_player_idx = 2;
+    game->round.player_array.players[2].out = true;
     init_game_tree_in_game(game);
 }
 
 void setup_game_from_user_input(Game *game)
 {
+    //static const Path paths[] = {
+    //    { {0, 0}, {0, 1} },
+    //    { {1, 0}, {1, 1} },
+    //    { {2, 0}, {2, 1} },
+    //    { {0, 1}, {0, 2} },
+    //    { {1, 1}, {1, 2} },
+    //    { {2, 1}, {2, 2} },
+    //    { {0, 2}, {0, 3} },
+    //    { {1, 2}, {1, 3} },
+    //    { {2, 2}, {2, 3} },
+    //    { {0, 1}, {1, 1} },
+    //    { {0, 2}, {1, 2} },
+    //    { {0, 3}, {1, 3} },
+    //    { {1, 1}, {2, 1} },
+    //    { {1, 2}, {2, 2} },
+    //    { {1, 3}, {2, 3} },
+    //    { {1, 2}, {0, 3} },
+    //    { {1, 2}, {2, 3} },
+    //}; 
+
     static const Path paths[] = {
         { {0, 0}, {0, 1} },
         { {1, 0}, {1, 1} },
         { {2, 0}, {2, 1} },
-        { {0, 1}, {0, 2} },
+        { {0, 1}, {1, 2} },
         { {1, 1}, {1, 2} },
-        { {2, 1}, {2, 2} },
-        { {0, 2}, {0, 3} },
-        { {1, 2}, {1, 3} },
-        { {2, 2}, {2, 3} },
+        { {2, 1}, {1, 2} },
         { {0, 1}, {1, 1} },
-        { {0, 2}, {1, 2} },
-        { {0, 3}, {1, 3} },
-        { {1, 1}, {2, 1} },
-        { {1, 2}, {2, 2} },
-        { {1, 3}, {2, 3} },
-        { {1, 2}, {0, 3} },
-        { {1, 2}, {2, 3} },
+        { {2, 1}, {1, 1} },
     }; 
 
+    //static const Point2D poses[] = {
+    //    {0, 0}, {0, 1}, {0, 2},
+    //    {1, 0}, {1, 1}, {1, 2},
+    //    {2, 0}, {2, 1}, {2, 2},
+    //};
     static const Point2D poses[] = {
-        {0, 0}, {0, 1}, {0, 2},
-        {1, 0}, {1, 1}, {1, 2},
-        {2, 0}, {2, 1}, {2, 2},
+        {0, 0}, {0, 1},
+        {2, 0}, {2, 1},
+        {1, 1},
     };
+
 
     PlayerIdx user_player_idx = get_player_idx("Choose your player: ", game->round.player_array.player_num);
     PlayerIdx start_player_idx = get_player_idx("Select player who moves his chess first(a, b or c): ", game->round.player_array.player_num);
@@ -76,7 +95,7 @@ static DirectionIdx ask_for_choice(Game *game, Point2D *p_pos)
     }
     else
     {
-        RobotInfo robot_info = robot_make_best_choice(game, p_pos, &dir);
+        RobotInfo robot_info = robot_make_random_choice(game, p_pos, &dir);
         handle_robot_info(robot_info);
         print_move_choice(*p_pos, dir);
     }

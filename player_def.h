@@ -12,7 +12,6 @@ typedef struct {
 } Player;
 
 #define NULL_PLAYER_IDX ((PlayerIdx) 0xff)
-#define HAS_PLAYER_IDX ((PlayerIdx) 0xff - 1)
 #define FIRST_PLAYER_IDX_CHAR ('a')
 
 #endif

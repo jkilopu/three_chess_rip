@@ -1,4 +1,5 @@
-// Compile: gcc settings.c input.c map.c player_array.c round.c robot.c game.c move.c movement_idx.c chess_idx.c game_tree.c main.c -o three_chess_rip -g
+/* Compile: gcc settings.c input.c map.c player_array.c round.c \
+  robot.c game.c move.c movement_idx.c chess_idx.c game_tree.c main.c -o three_chess_rip -g */
 
 #include "main.h"
 #include "game.h"
@@ -8,8 +9,8 @@ int main(void)
 {
     setup();
 
-    const ChessIdx chess_num[] = {3, 3, 3};
-    Game *game = create_empty_game(3, 4, chess_num, 3);
+    const ChessIdx chess_nums[] = {2, 2, 1};
+    Game *game = create_empty_game(3, 3, chess_nums, 3);
 
     setup_game_from_user_input(game);
 
